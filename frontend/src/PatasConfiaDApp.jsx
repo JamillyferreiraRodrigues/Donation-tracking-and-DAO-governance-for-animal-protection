@@ -6,8 +6,7 @@ import {
   useBalance, 
   useConnect, 
   useDisconnect,
-  useContractRead,
-  usePublicClient
+  useContractRead
 } from "wagmi";
 import { 
   USERS_CONTRACT_ADDRESS, 
@@ -18,44 +17,42 @@ import {
 import { useLoadPets } from "./hooks/useLoadPets";
 
 // ------------------
-// Serviço Pinata/IPFS
+// Pinata/IPFS Service
 // ------------------
 class MetadataService {
   static async generateMetadata(petData) {
-    console.log("📝 Gerando metadata para:", petData.name);
+    console.log("📝 Generating metadata for:", petData.name);
     
     let imageUrl = petData.imageUrl;
     
-    
     if (petData.imageFile) {
-      console.log("🖼️ Processando imagem...");
+      console.log("🖼️ Processing image...");
       try {
         imageUrl = await this.uploadImageToIPFS(petData.imageFile);
-        console.log("✅ Imagem processada:", imageUrl);
+        console.log("✅ Image processed:", imageUrl);
       } catch (error) {
-        console.error("❌ Erro ao processar imagem:", error);
+        console.error("❌ Error processing image:", error);
       }
     }
 
-    // Criar metadata
     const metadata = {
       name: petData.name,
       description: petData.description,
-      image: imageUrl || "https://via.placeholder.com/400x400/4caf50/ffffff?text=Pet+Sem+Imagem",
+      image: imageUrl || "https://via.placeholder.com/400x400/4caf50/ffffff?text=Pet+No+Image",
       attributes: [
-        { trait_type: "Espécie", value: petData.species },
-        { trait_type: "Raça", value: petData.breed || "SRD" },
-        { trait_type: "Idade", value: petData.age || "Não informada" },
-        { trait_type: "Porte", value: petData.size },
-        { trait_type: "Gênero", value: petData.gender },
-        { trait_type: "Saúde", value: petData.health },
-        { trait_type: "Temperamento", value: petData.temperament },
-        { trait_type: "Localização", value: petData.location || "Não informada" },
+        { trait_type: "Species", value: petData.species },
+        { trait_type: "Breed", value: petData.breed || "Mixed" },
+        { trait_type: "Age", value: petData.age || "Not informed" },
+        { trait_type: "Size", value: petData.size },
+        { trait_type: "Gender", value: petData.gender },
+        { trait_type: "Health", value: petData.health },
+        { trait_type: "Temperament", value: petData.temperament },
+        { trait_type: "Location", value: petData.location || "Not informed" },
       ],
       created_at: new Date().toISOString()
     };
 
-    console.log("📄 Metadata gerada:", metadata);
+    console.log("📄 Metadata generated:", metadata);
     return metadata;
   }
 
@@ -64,14 +61,14 @@ class MetadataService {
       const PINATA_JWT = import.meta.env.VITE_PINATA_JWT;
       
       if (!PINATA_JWT) {
-        console.warn("⚠️ PINATA_JWT não configurado. Usando fallback...");
+        console.warn("⚠️ PINATA_JWT not configured. Using fallback...");
         return null;
       }
 
       const formData = new FormData();
       formData.append('file', imageFile);
 
-      console.log("📤 Enviando imagem para Pinata...");
+      console.log("📤 Uploading image to Pinata...");
       const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
         method: 'POST',
         headers: {
@@ -82,15 +79,15 @@ class MetadataService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Erro Pinata:", errorText);
-        throw new Error(`Erro HTTP: ${response.status}`);
+        console.error("❌ Pinata Error:", errorText);
+        throw new Error(`HTTP Error: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log("📸 Imagem salva no IPFS:", data.IpfsHash);
+      console.log("📸 Image saved to IPFS:", data.IpfsHash);
       return `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
     } catch (error) {
-      console.error('❌ Erro ao fazer upload da imagem:', error);
+      console.error('❌ Error uploading image:', error);
       return null;
     }
   }
@@ -100,13 +97,13 @@ class MetadataService {
       const PINATA_JWT = import.meta.env.VITE_PINATA_JWT;
       
       if (!PINATA_JWT) {
-        console.warn("⚠️ PINATA_JWT não configurado. Usando fallback base64...");
+        console.warn("⚠️ PINATA_JWT not configured. Using base64 fallback...");
         const jsonString = JSON.stringify(metadata);
         const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
         return `data:application/json;base64,${base64Data}`;
       }
 
-      console.log("📤 Enviando metadata para Pinata...");
+      console.log("📤 Uploading metadata to Pinata...");
       const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
         method: 'POST',
         headers: {
@@ -118,16 +115,15 @@ class MetadataService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Erro Pinata:", errorText);
-        throw new Error(`Erro HTTP: ${response.status}`);
+        console.error("❌ Pinata Error:", errorText);
+        throw new Error(`HTTP Error: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log("✅ Metadata salva no IPFS:", data.IpfsHash);
+      console.log("✅ Metadata saved to IPFS:", data.IpfsHash);
       return `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
     } catch (error) {
-      console.error('❌ Erro ao fazer upload para IPFS:', error);
-      // Fallback: usar base64
+      console.error('❌ Error uploading to IPFS:', error);
       const jsonString = JSON.stringify(metadata);
       const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
       return `data:application/json;base64,${base64Data}`;
@@ -136,7 +132,7 @@ class MetadataService {
 }
 
 // ------------------
-// Estilos
+// Styles
 // ------------------
 const styles = {
   container: {
@@ -221,7 +217,7 @@ const styles = {
 };
 
 // ------------------
-// Componentes Compartilhados
+// Shared Components
 // ------------------
 const PixelBanner = () => (
   <div style={{ 
@@ -242,9 +238,9 @@ const PixelBanner = () => (
       <span style={{ fontSize: "48px" }}>🐕</span>
       <div style={{ textAlign: "center" }}>
         <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-          🐾 Patas Confia
+          🐾 Donation Tracking & DAO Governance for Animal Protection
         </h1>
-        <p style={{ color: "#2e7d32", margin: 0 }}>Plataforma de Adoção Responsável - CESS Testnet</p>
+        <p style={{ color: "#2e7d32", margin: 0 }}>Transparent Donation Management • Community Governance • Animal Welfare</p>
       </div>
       <span style={{ fontSize: "48px" }}>🐈</span>
     </div>
@@ -252,7 +248,7 @@ const PixelBanner = () => (
 );
 
 // ------------------
-// NOVO: Componente de Introdução do Projeto
+// Project Introduction Component
 // ------------------
 const ProjectIntroduction = () => (
   <div style={{
@@ -266,7 +262,7 @@ const ProjectIntroduction = () => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginBottom: "20px" }}>
       <span style={{ fontSize: "48px" }}>💚</span>
       <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-        Bem-vindo ao Patas Confia
+        Welcome to Donation Tracking & DAO Governance
       </h2>
       <span style={{ fontSize: "48px" }}>🐾</span>
     </div>
@@ -279,9 +275,9 @@ const ProjectIntroduction = () => (
       color: "#2e7d32"
     }}>
       <p style={{ marginBottom: "16px" }}>
-        🌟 <strong>Nosso objetivo:</strong> Conectar <strong>doadores responsáveis</strong> a 
-        <strong> adotantes comprometidos</strong> através da tecnologia blockchain, 
-        garantindo transparência, segurança e rastreabilidade em todo o processo de adoção.
+        🌟 <strong>Our Mission:</strong> Eliminate donation trust issues through blockchain transparency. 
+        Anyone in the world can participate by donating and becoming part of the governance process, 
+        ensuring every contribution reaches animals in need.
       </p>
       
       <div style={{
@@ -296,12 +292,12 @@ const ProjectIntroduction = () => (
           padding: "16px",
           border: "2px solid #a5d6a7"
         }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🦮</div>
+          <div style={{ fontSize: "32px", marginBottom: "8px" }}>💰</div>
           <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1a3c1a", marginBottom: "8px" }}>
-            Apenas animais legais
+            Transparent Donations
           </h3>
           <p style={{ fontSize: "14px", color: "#2e7d32" }}>
-            Somente pets que podem ser legalmente doados devem ser registrados
+            Every donation is recorded on-chain - trace where your money goes
           </p>
         </div>
         
@@ -311,12 +307,12 @@ const ProjectIntroduction = () => (
           padding: "16px",
           border: "2px solid #a5d6a7"
         }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>❤️</div>
+          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🗳️</div>
           <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1a3c1a", marginBottom: "8px" }}>
-            Responsabilidade acima de tudo
+            DAO Governance
           </h3>
           <p style={{ fontSize: "14px", color: "#2e7d32" }}>
-            Compromisso com o bem-estar animal é essencial
+            Donors vote on fund allocation and protection initiatives
           </p>
         </div>
         
@@ -326,12 +322,12 @@ const ProjectIntroduction = () => (
           padding: "16px",
           border: "2px solid #a5d6a7"
         }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🏠</div>
+          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🌍</div>
           <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1a3c1a", marginBottom: "8px" }}>
-            Adoção consciente
+            Global Participation
           </h3>
           <p style={{ fontSize: "14px", color: "#2e7d32" }}>
-            Cada adoção é uma decisão que muda vidas
+            Anyone from anywhere can donate and help animals worldwide
           </p>
         </div>
       </div>
@@ -344,17 +340,16 @@ const ProjectIntroduction = () => (
         marginTop: "20px"
       }}>
         <p style={{ fontStyle: "italic", color: "#e65100", fontWeight: "bold" }}>
-          ⚠️ <strong>Importante:</strong> Este não é apenas um site de adoção - 
-          é um compromisso com a vida animal, onde cada transação representa 
-          uma nova chance de felicidade para um pet!
+          ⚠️ <strong>Why Blockchain?</strong> Complete transparency eliminates the question 
+          "Where does my donation go?" - every transaction is verifiable and traceable.
         </p>
       </div>
       
       <div style={{ marginTop: "24px", fontSize: "14px", color: "#388e3c" }}>
         <span style={{ fontSize: "24px" }}>🌿</span>
         <p style={{ margin: "8px 0" }}>
-          <strong>Como funciona:</strong> Registre-se → Cadastre pets (doadores) → 
-          Solicite adoção (adotantes) → Aprove seu novo amigo!
+          <strong>How it works:</strong> Register → Donate → Participate in DAO votes → 
+          Track fund allocation → Help animals worldwide!
         </p>
       </div>
     </div>
@@ -363,7 +358,10 @@ const ProjectIntroduction = () => (
 
 const WalletConnect = () => {
   const { address, isConnected } = useAccount();
-  const { data: balance } = useBalance({ address });
+  const { data: balance, isLoading: isBalanceLoading } = useBalance({ 
+    address,
+    chainId: 11155111,
+  });
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
@@ -401,7 +399,7 @@ const WalletConnect = () => {
             {address}
           </span>
           <span style={{ fontSize: "14px", color: "#2e7d32", whiteSpace: "nowrap" }}>
-            Saldo: {balance?.formatted?.slice(0, 6)} {balance?.symbol}
+            Balance: {isBalanceLoading ? "Loading..." : `${balance?.formatted?.slice(0, 6) || "0"} ${balance?.symbol || "ETH"}`}
           </span>
           <button
             onClick={() => disconnect()}
@@ -410,7 +408,7 @@ const WalletConnect = () => {
               whiteSpace: "nowrap"
             }}
           >
-            Desconectar
+            Disconnect
           </button>
         </div>
       </div>
@@ -435,7 +433,7 @@ const WalletConnect = () => {
           onClick={() => connect({ connector })}
           style={styles.button}
         >
-          🌿 Conectar {connector.name}
+          🌿 Connect {connector.name}
         </button>
       ))}
     </div>
@@ -451,7 +449,7 @@ const Navbar = ({ currentPage, setCurrentPage }) => (
         background: currentPage === "registro" ? "#a5d6a7" : "#e8f5e9"
       }}
     >
-      🌼 Registro
+      🌼 Register
     </button>
     <button 
       onClick={() => setCurrentPage("criar")}
@@ -460,7 +458,7 @@ const Navbar = ({ currentPage, setCurrentPage }) => (
         background: currentPage === "criar" ? "#a5d6a7" : "#e8f5e9"
       }}
     >
-      🐕 Criar Pets
+      🐕 Register Pets
     </button>
     <button 
       onClick={() => setCurrentPage("adotar")}
@@ -469,7 +467,7 @@ const Navbar = ({ currentPage, setCurrentPage }) => (
         background: currentPage === "adotar" ? "#a5d6a7" : "#e8f5e9"
       }}
     >
-      🏠 Adotar
+      🏠 Adopt
     </button>
     <button 
       onClick={() => setCurrentPage("solicitacoes")}
@@ -478,7 +476,7 @@ const Navbar = ({ currentPage, setCurrentPage }) => (
         background: currentPage === "solicitacoes" ? "#a5d6a7" : "#e8f5e9"
       }}
     >
-      📋 Solicitações
+      📋 Requests
     </button>
     <button 
       onClick={() => setCurrentPage("adocoes")}
@@ -487,23 +485,23 @@ const Navbar = ({ currentPage, setCurrentPage }) => (
         background: currentPage === "adocoes" ? "#a5d6a7" : "#e8f5e9"
       }}
     >
-      ❤️ Minhas Adoções
+      ❤️ My Adoptions
     </button>
   </nav>
 );
 
 // ------------------
-// UTIL: Criar contrato com signer
+// UTIL: Create contract with signer
 // ------------------
 const getSignerContract = async (abi, address) => {
-  if (!window.ethereum) throw new Error("Carteira não encontrada (window.ethereum)");
+  if (!window.ethereum) throw new Error("Wallet not found (window.ethereum)");
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
   return new ethers.Contract(address, abi, signer);
 };
 
 // ------------------
-// Página 1 — Registro de Usuário 
+// Page 1 — User Registration 
 // ------------------
 const Registro = () => {
   const { address, isConnected } = useAccount();
@@ -513,106 +511,119 @@ const Registro = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Consultar usuário atual
-  const { data: userData, refetch: refetchUser } = useContractRead({
+  // Usando wagmi para ler o contrato
+  const { data: userData, refetch: refetchUserData } = useContractRead({
     address: USERS_CONTRACT_ADDRESS,
     abi: USERS_CONTRACT_ABI,
     functionName: "getUser",
     args: [address],
     enabled: false,
+    chainId: 11155111,
   });
 
-  // Consultar usuário por wallet
-  const { data: queriedUserData, refetch: refetchQueriedUser } = useContractRead({
+  const { data: queriedUserData, refetch: refetchQueriedUser, isLoading: isLoadingQueried } = useContractRead({
     address: USERS_CONTRACT_ADDRESS,
     abi: USERS_CONTRACT_ABI,
     functionName: "getUser",
-    args: [walletConsulta || "0x0000000000000000000000000000000000000000"],
+    args: [walletConsulta],
     enabled: false,
+    chainId: 11155111,
   });
 
-  // Registrar usuário com ethers
+  // Register user with ethers
   const handleRegister = async () => {
     if (!isConnected) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return;
     }
     
     try {
       setLoading(true);
-      setMessage("🔐 Solicitando assinatura...");
+      setMessage("🔐 Requesting signature...");
       
       const contract = await getSignerContract(USERS_CONTRACT_ABI, USERS_CONTRACT_ADDRESS);
       const tx = await contract.RegisterUser(parseInt(tipoConta));
       
-      setMessage(`⏳ Transação enviada: ${tx.hash}`);
+      setMessage(`⏳ Transaction sent: ${tx.hash}`);
       await tx.wait();
       
-      setMessage("✅ Usuário registrado com sucesso!");
-      refetchUser();
+      setMessage("✅ User registered successfully!");
+      refetchUserData();
     } catch (err) {
-      console.error("Erro no registro:", err);
-      setMessage(`❌ Erro: ${err?.message || String(err)}`);
+      console.error("Registration error:", err);
+      setMessage(`❌ Error: ${err?.message || String(err)}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Verificar se o usuário atual está registrado
+  // Check if current user is registered
   const checkSelf = async () => {
     if (!isConnected) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return;
     }
-    
+
     try {
-      const result = await refetchUser();
+      setLoading(true);
+      setMessage("🔍 Fetching user data...");
+      
+      const result = await refetchUserData();
+      
       if (result.data && result.data.wallet !== "0x0000000000000000000000000000000000000000") {
-        const u = result.data;
         setUserInfo({
-          wallet: u.wallet,
-          tipo: Number(u.tipo),
-          data: new Date(Number(u.data) * 1000).toLocaleString("pt-BR")
+          wallet: result.data.wallet,
+          tipo: Number(result.data.tipo),
+          data: new Date(Number(result.data.data) * 1000).toLocaleString(),
         });
-        setMessage(`✅ Você está cadastrado como ${Number(u.tipo) === 1 ? "🐕 Doador" : "🐾 Adotante"}`);
+        setMessage("✅ User found!");
       } else {
         setUserInfo(null);
-        setMessage("❌ Você não está cadastrado");
+        setMessage("❌ You are not registered");
       }
     } catch (err) {
       console.error(err);
-      setMessage("❌ Erro ao verificar cadastro");
+      setUserInfo(null);
+      setMessage("❌ Error fetching user");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Consultar outro usuário
+  // Query another user
   const getUser = async () => {
     if (!walletConsulta.trim()) {
-      setMessage("❌ Informe um endereço");
+      setMessage("❌ Enter a wallet address");
       return;
     }
-    
+
     try {
+      setLoading(true);
+      setMessage("🔍 Searching for user...");
+      
       const result = await refetchQueriedUser();
+      
       if (result.data && result.data.wallet !== "0x0000000000000000000000000000000000000000") {
-        const u = result.data;
         setUserInfo({
-          wallet: u.wallet,
-          tipo: Number(u.tipo),
-          data: new Date(Number(u.data) * 1000).toLocaleString("pt-BR")
+          wallet: result.data.wallet,
+          tipo: Number(result.data.tipo),
+          data: new Date(Number(result.data.data) * 1000).toLocaleString(),
         });
-        setMessage("✅ Usuário encontrado!");
+        setMessage("✅ User found!");
       } else {
         setUserInfo(null);
-        setMessage("❌ Usuário não encontrado");
+        setMessage("❌ User not found");
       }
     } catch (err) {
       console.error(err);
-      setMessage("❌ Erro ao buscar usuário");
+      setUserInfo(null);
+      setMessage(`❌ Error: ${err?.message || "Failed to fetch user"}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Verificar automaticamente quando conectar
+  // Auto-check when connected
   useEffect(() => {
     if (isConnected) {
       checkSelf();
@@ -622,21 +633,18 @@ const Registro = () => {
   return (
     <div style={styles.container}>
       <PixelBanner />
-      
-      {/* NOVO: Introdução do Projeto */}
       <ProjectIntroduction />
-      
       <WalletConnect />
       
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
         <div style={{ ...styles.grid, ...styles.grid2, gap: "24px" }}>
           
-          {/* Coluna 1: Registrar Usuário */}
+          {/* Column 1: Register User */}
           <div style={styles.card}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
               <span style={{ fontSize: "24px" }}>🌼</span>
               <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-                Cadastro de Usuário
+                User Registration
               </h1>
             </div>
 
@@ -657,7 +665,7 @@ const Registro = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
                 <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>
-                  Tipo de Conta
+                  Account Type
                 </label>
                 <select 
                   value={tipoConta} 
@@ -665,8 +673,8 @@ const Registro = () => {
                   style={styles.input}
                   disabled={loading}
                 >
-                  <option value="1">🐕 Doador - Posso cadastrar pets para adoção</option>
-                  <option value="2">🐾 Adotante - Quero adotar pets</option>
+                  <option value="1">🐕 Donor - Can register pets for adoption</option>
+                  <option value="2">🐾 Adopter - Want to adopt pets</option>
                 </select>
               </div>
 
@@ -679,24 +687,24 @@ const Registro = () => {
                   opacity: (!isConnected || loading) ? 0.5 : 1
                 }}
               >
-                {loading ? "⏳ Processando..." : 
-                 !isConnected ? "🔒 Conecte a Carteira" : 
-                 "✅ Registrar Usuário"}
+                {loading ? "⏳ Processing..." : 
+                 !isConnected ? "🔒 Connect Wallet" : 
+                 "✅ Register User"}
               </button>
             </div>
           </div>
 
-          {/* Coluna 2: Consultar Usuário */}
+          {/* Column 2: Query User */}
           <div style={styles.card}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
               <span style={{ fontSize: "24px" }}>🔍</span>
               <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-                Consultar Usuário
+                Query User
               </h1>
             </div>
 
             <input 
-              placeholder="Digite o endereço da carteira (0x...)" 
+              placeholder="Enter wallet address (0x...)" 
               value={walletConsulta} 
               onChange={(e) => setWalletConsulta(e.target.value)} 
               style={styles.input}
@@ -705,30 +713,30 @@ const Registro = () => {
             <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
               <button 
                 onClick={getUser} 
-                disabled={!walletConsulta.trim()}
+                disabled={!walletConsulta.trim() || loading}
                 style={{
                   ...styles.button,
                   flex: 1,
-                  opacity: !walletConsulta.trim() ? 0.5 : 1
+                  opacity: (!walletConsulta.trim() || loading) ? 0.5 : 1
                 }}
               >
-                📋 Buscar Dados
+                {loading ? "⏳ Searching..." : "📋 Search User"}
               </button>
               
               <button 
                 onClick={checkSelf} 
-                disabled={!isConnected}
+                disabled={!isConnected || loading}
                 style={{
                   ...styles.secondaryButton,
                   flex: 1,
-                  opacity: !isConnected ? 0.5 : 1
+                  opacity: (!isConnected || loading) ? 0.5 : 1
                 }}
               >
-                👤 Ver Meu Cadastro
+                {loading ? "⏳ Loading..." : "👤 Check My Registration"}
               </button>
             </div>
 
-            {/* Resultados da consulta */}
+            {/* Query Results */}
             {userInfo && (
               <div style={{ 
                 marginTop: "16px", 
@@ -737,10 +745,10 @@ const Registro = () => {
                 border: "2px solid #2ecc71",
                 borderRadius: "8px"
               }}>
-                <h3 style={{ color: "#27ae60", marginBottom: "12px", fontSize: "18px" }}>✅ Usuário Encontrado</h3>
+                <h3 style={{ color: "#27ae60", marginBottom: "12px", fontSize: "18px" }}>✅ User Found</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div>
-                    <strong>👤 Carteira:</strong> 
+                    <strong>👤 Wallet:</strong> 
                     <div style={{ 
                       fontFamily: "monospace", 
                       fontSize: "12px", 
@@ -754,16 +762,16 @@ const Registro = () => {
                     </div>
                   </div>
                   <div>
-                    <strong>🎯 Tipo:</strong> 
+                    <strong>🎯 Type:</strong> 
                     <span style={{ 
                       color: userInfo.tipo === 1 ? "#e67e22" : "#2ecc71",
                       fontWeight: "bold",
                       marginLeft: "8px"
                     }}>
-                      {userInfo.tipo === 1 ? "🐕 Doador" : "🐾 Adotante"}
+                      {userInfo.tipo === 1 ? "🐕 Donor" : "🐾 Adopter"}
                     </span>
                   </div>
-                  <div><strong>📅 Data de Registro:</strong> {userInfo.data}</div>
+                  <div><strong>📅 Registration Date:</strong> {userInfo.data}</div>
                 </div>
               </div>
             )}
@@ -775,20 +783,20 @@ const Registro = () => {
 };
 
 // -----------------
-// Página Criar Pets
+// Page: Register Pets
 // ------------------
 const CriarPets = ({ reloadPets }) => {
   const { address, isConnected } = useAccount();
   const [petForm, setPetForm] = useState({
     name: "",
     description: "",
-    species: "cachorro",
+    species: "dog",
     breed: "",
     age: "",
-    size: "medio",
-    gender: "macho",
-    health: "saudavel",
-    temperament: "calmo",
+    size: "medium",
+    gender: "male",
+    health: "healthy",
+    temperament: "calm",
     location: "",
     imageUrl: "",
     imageFile: null,
@@ -821,8 +829,8 @@ const CriarPets = ({ reloadPets }) => {
 
   const resetPetForm = () => {
     setPetForm({
-      name: "", description: "", species: "cachorro", breed: "", age: "",
-      size: "medio", gender: "macho", health: "saudavel", temperament: "calmo",
+      name: "", description: "", species: "dog", breed: "", age: "",
+      size: "medium", gender: "male", health: "healthy", temperament: "calm",
       location: "", imageUrl: "", imageFile: null, imagePreview: ""
     });
     setTokenURI("");
@@ -830,29 +838,29 @@ const CriarPets = ({ reloadPets }) => {
 
   const createMetadata = async () => {
     if (!isConnected || !address) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return null;
     }
     
     if (!petForm.name || !petForm.description) {
-      setMessage("❌ Nome e descrição são obrigatórios");
+      setMessage("❌ Name and description are required");
       return null;
     }
 
     setCreating(true);
-    setMessage("⏳ Preparando metadata...");
+    setMessage("⏳ Preparing metadata...");
 
     try {
       const metadata = await MetadataService.generateMetadata(petForm);
       const uri = await MetadataService.uploadToIPFS(metadata);
       
       setTokenURI(uri);
-      setMessage("✅ Metadata pronta! Clique em 'Criar NFT' para continuar.");
+      setMessage("✅ Metadata ready! Click 'Create NFT' to continue.");
       setCreating(false);
       return uri;
       
     } catch (err) {
-      setMessage(`❌ Erro ao criar metadata: ${err.message}`);
+      setMessage(`❌ Error creating metadata: ${err.message}`);
       setCreating(false);
       return null;
     }
@@ -866,28 +874,27 @@ const CriarPets = ({ reloadPets }) => {
         return;
       }
 
-      // Mint: usar ethers com signer
       if (!isConnected || !address) {
-        setMessage("❌ Conecte a carteira antes de mintar");
+        setMessage("❌ Connect wallet before minting");
         return;
       }
 
       setCreating(true);
-      setMessage("🔐 Solicitando assinatura para mint...");
+      setMessage("🔐 Requesting signature for mint...");
 
       const contract = await getSignerContract(PETS_CONTRACT_ABI, PETS_CONTRACT_ADDRESS);
       const tx = await contract.mintPet(address, tokenURI);
       
-      setMessage(`⏳ Transação enviada: ${tx.hash}. Aguardando confirmação...`);
+      setMessage(`⏳ Transaction sent: ${tx.hash}. Waiting for confirmation...`);
       await tx.wait();
       
-      setMessage("🎉 Pet NFT criado com sucesso!");
+      setMessage("🎉 Pet NFT created successfully!");
       resetPetForm();
       setTokenURI("");
       if (reloadPets) setTimeout(() => reloadPets(), 1500);
     } catch (err) {
-      console.error("Erro mint:", err);
-      setMessage(`❌ Erro ao criar NFT: ${err?.message || String(err)}`);
+      console.error("Mint error:", err);
+      setMessage(`❌ Error creating NFT: ${err?.message || String(err)}`);
     } finally {
       setCreating(false);
     }
@@ -905,7 +912,7 @@ const CriarPets = ({ reloadPets }) => {
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
             <span style={{ fontSize: "32px" }}>🐕</span>
             <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-              Cadastrar Novo Pet
+              Register New Pet
             </h1>
             <span style={{
               background: "#4caf50",
@@ -915,7 +922,7 @@ const CriarPets = ({ reloadPets }) => {
               fontSize: "12px",
               fontWeight: "bold"
             }}>
-              {!tokenURI ? "📝 Passo 1: Metadata" : "🚀 Passo 2: Blockchain"}
+              {!tokenURI ? "📝 Step 1: Metadata" : "🚀 Step 2: Blockchain"}
             </span>
           </div>
 
@@ -942,7 +949,7 @@ const CriarPets = ({ reloadPets }) => {
               textAlign: "center"
             }}>
               <span style={{ fontWeight: "bold", color: "#0d47a1" }}>
-                ✅ Metadata pronta!
+                ✅ Metadata ready!
               </span>
               <div style={{
                 fontSize: "12px",
@@ -962,7 +969,7 @@ const CriarPets = ({ reloadPets }) => {
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             <div style={{ ...styles.grid, gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Nome *</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Name *</label>
                 <input
                   name="name"
                   value={petForm.name}
@@ -975,7 +982,7 @@ const CriarPets = ({ reloadPets }) => {
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Espécie</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Species</label>
                 <select 
                   name="species" 
                   value={petForm.species} 
@@ -983,38 +990,38 @@ const CriarPets = ({ reloadPets }) => {
                   style={styles.input}
                   disabled={isLoading || !!tokenURI}
                 >
-                  <option value="cachorro">🐕 Cachorro</option>
-                  <option value="gato">🐈 Gato</option>
-                  <option value="outro">🐾 Outro</option>
+                  <option value="dog">🐕 Dog</option>
+                  <option value="cat">🐈 Cat</option>
+                  <option value="other">🐾 Other</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Raça</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Breed</label>
                 <input
                   name="breed"
                   value={petForm.breed}
                   onChange={handlePetFormChange}
                   style={styles.input}
-                  placeholder="Ex: Vira-lata"
+                  placeholder="Ex: Mixed breed"
                   disabled={isLoading || !!tokenURI}
                 />
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Idade</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Age</label>
                 <input
                   name="age"
                   value={petForm.age}
                   onChange={handlePetFormChange}
                   style={styles.input}
-                  placeholder="Ex: 2 anos"
+                  placeholder="Ex: 2 years"
                   disabled={isLoading || !!tokenURI}
                 />
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Porte</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Size</label>
                 <select 
                   name="size" 
                   value={petForm.size} 
@@ -1022,14 +1029,14 @@ const CriarPets = ({ reloadPets }) => {
                   style={styles.input}
                   disabled={isLoading || !!tokenURI}
                 >
-                  <option value="pequeno">Pequeno</option>
-                  <option value="medio">Médio</option>
-                  <option value="grande">Grande</option>
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
                 </select>
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Gênero</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Gender</label>
                 <select 
                   name="gender" 
                   value={petForm.gender} 
@@ -1037,13 +1044,13 @@ const CriarPets = ({ reloadPets }) => {
                   style={styles.input}
                   disabled={isLoading || !!tokenURI}
                 >
-                  <option value="macho">Macho</option>
-                  <option value="femea">Fêmea</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
                 </select>
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Saúde</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Health</label>
                 <select 
                   name="health" 
                   value={petForm.health} 
@@ -1051,14 +1058,14 @@ const CriarPets = ({ reloadPets }) => {
                   style={styles.input}
                   disabled={isLoading || !!tokenURI}
                 >
-                  <option value="saudavel">Saudável</option>
-                  <option value="tratamento">Em tratamento</option>
-                  <option value="especial">Cuidados especiais</option>
+                  <option value="healthy">Healthy</option>
+                  <option value="treatment">In treatment</option>
+                  <option value="special">Special needs</option>
                 </select>
               </div>
               
               <div>
-                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Temperamento</label>
+                <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Temperament</label>
                 <select 
                   name="temperament" 
                   value={petForm.temperament} 
@@ -1066,28 +1073,28 @@ const CriarPets = ({ reloadPets }) => {
                   style={styles.input}
                   disabled={isLoading || !!tokenURI}
                 >
-                  <option value="calmo">Calmo</option>
-                  <option value="ativo">Ativo</option>
-                  <option value="timido">Tímido</option>
+                  <option value="calm">Calm</option>
+                  <option value="active">Active</option>
+                  <option value="shy">Shy</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Localização</label>
+              <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>Location</label>
               <input
                 name="location"
                 value={petForm.location}
                 onChange={handlePetFormChange}
                 style={styles.input}
-                placeholder="Ex: São Paulo, SP"
+                placeholder="Ex: New York, NY"
                 disabled={isLoading || !!tokenURI}
               />
             </div>
 
             <div>
               <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>
-                Imagem do Pet
+                Pet Image
               </label>
               <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
                 {petForm.imagePreview ? (
@@ -1154,14 +1161,14 @@ const CriarPets = ({ reloadPets }) => {
                     }}
                   />
                   <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-                    Ou insira uma URL da imagem:
+                    Or enter image URL:
                   </div>
                   <input
                     name="imageUrl"
                     value={petForm.imageUrl}
                     onChange={handlePetFormChange}
                     style={{ ...styles.input, marginBottom: "0", fontSize: "14px" }}
-                    placeholder="https://exemplo.com/imagem.jpg"
+                    placeholder="https://example.com/image.jpg"
                     disabled={isLoading || !!tokenURI || petForm.imageFile}
                   />
                 </div>
@@ -1170,7 +1177,7 @@ const CriarPets = ({ reloadPets }) => {
 
             <div>
               <label style={{ fontWeight: "600", marginBottom: "8px", display: "block" }}>
-                Descrição do Pet * (máx 250 caracteres)
+                Pet Description * (max 250 characters)
               </label>
               <textarea
                 name="description"
@@ -1179,12 +1186,12 @@ const CriarPets = ({ reloadPets }) => {
                 maxLength={250}
                 rows={4}
                 style={styles.input}
-                placeholder="Conte sobre a personalidade, história, hábitos..."
+                placeholder="Tell us about personality, history, habits..."
                 required
                 disabled={isLoading || !!tokenURI}
               />
               <div style={{ textAlign: "right", fontSize: "14px", color: "#2e7d32", marginTop: "4px" }}>
-                {petForm.description.length}/250 caracteres
+                {petForm.description.length}/250 characters
               </div>
             </div>
 
@@ -1195,7 +1202,7 @@ const CriarPets = ({ reloadPets }) => {
                 style={styles.secondaryButton}
                 disabled={isLoading}
               >
-                🔄 {tokenURI ? "Cancelar" : "Limpar"}
+                🔄 {tokenURI ? "Cancel" : "Clear"}
               </button>
 
               <button 
@@ -1211,9 +1218,9 @@ const CriarPets = ({ reloadPets }) => {
                 {isLoading ? (
                   <>
                     <span style={{ marginRight: "8px" }}>⏳</span>
-                    Processando...
+                    Processing...
                   </>
-                ) : tokenURI ? "🚀 Criar NFT" : "📝 Preparar Metadata"}
+                ) : tokenURI ? "🚀 Create NFT" : "📝 Prepare Metadata"}
               </button>
             </div>
           </div>
@@ -1224,36 +1231,36 @@ const CriarPets = ({ reloadPets }) => {
 };
 
 // ------------------
-// Página 3 — Adotar Pets
+// Page 3 — Adopt Pets
 // ------------------
 const AdotarPets = ({ pets, reloadPets }) => {
   const { address, isConnected } = useAccount();
   const [message, setMessage] = useState("");
-  const [viewMode, setViewMode] = useState("disponiveis");
+  const [viewMode, setViewMode] = useState("available");
   const [solicitandoId, setSolicitandoId] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const solicitarAdocao = async (tokenId) => {
     if (!isConnected) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return;
     }
     try {
       setSolicitandoId(tokenId);
       setBusy(true);
-      setMessage("🔐 Solicitando adoção - assine na carteira...");
+      setMessage("🔐 Requesting adoption - sign in wallet...");
       
       const contract = await getSignerContract(PETS_CONTRACT_ABI, PETS_CONTRACT_ADDRESS);
       const tx = await contract.requestAdoption(tokenId);
       
-      setMessage(`⏳ Tx enviada: ${tx.hash} — aguardando confirmação...`);
+      setMessage(`⏳ Tx sent: ${tx.hash} — waiting for confirmation...`);
       await tx.wait();
       
-      setMessage("✅ Solicitação enviada!");
+      setMessage("✅ Request sent!");
       if (reloadPets) setTimeout(() => reloadPets(), 1500);
     } catch (err) {
-      console.error("Erro requestAdoption:", err);
-      setMessage(`❌ Erro: ${err?.message || String(err)}`);
+      console.error("Error requestAdoption:", err);
+      setMessage(`❌ Error: ${err?.message || String(err)}`);
     } finally {
       setSolicitandoId(null);
       setBusy(false);
@@ -1264,7 +1271,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
     if (!pets || pets.length === 0) return [];
 
     switch (viewMode) {
-      case "disponiveis":
+      case "available":
         return pets.filter(pet => {
           if (!pet.owner || !address) return false;
           const isNotOwnedByUser = pet.owner.toLowerCase() !== address.toLowerCase();
@@ -1272,10 +1279,10 @@ const AdotarPets = ({ pets, reloadPets }) => {
           return isNotOwnedByUser && hasNoRequest;
         });
 
-      case "todos":
+      case "all":
         return pets;
 
-      case "meus":
+      case "mine":
         return pets.filter(pet => 
           pet.owner && address && 
           pet.owner.toLowerCase() === address.toLowerCase()
@@ -1289,20 +1296,20 @@ const AdotarPets = ({ pets, reloadPets }) => {
   const filteredPets = getFilteredPets();
 
   const shortAddr = (addr = "") => {
-    if (!addr || addr === "0x0000000000000000000000000000000000000000") return "Sem dono";
+    if (!addr || addr === "0x0000000000000000000000000000000000000000") return "No owner";
     return `${addr.substring(0,6)}...${addr.substring(addr.length - 4)}`;
   };
 
   const getPetStatus = (pet) => {
-    if (!pet.owner || !address) return "🔍 Carregando...";
+    if (!pet.owner || !address) return "🔍 Loading...";
     
     const isOwnedByUser = pet.owner.toLowerCase() === address.toLowerCase();
     const hasRequest = pet.requester;
 
     if (isOwnedByUser) {
-      return hasRequest ? "📨 Tem solicitação" : "👑 Meu pet";
+      return hasRequest ? "📨 Has request" : "👑 My pet";
     } else {
-      return hasRequest ? "⏳ Em processo" : "✅ Disponível";
+      return hasRequest ? "⏳ In process" : "✅ Available";
     }
   };
 
@@ -1315,7 +1322,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
           <span style={{ fontSize: "32px" }}>🐕</span>
           <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-            Explorar Pets
+            Explore Pets
           </h1>
           <span style={{
             background: "#4caf50",
@@ -1338,37 +1345,37 @@ const AdotarPets = ({ pets, reloadPets }) => {
         }}>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
-              onClick={() => setViewMode("disponiveis")}
+              onClick={() => setViewMode("available")}
               style={{
                 ...styles.button,
-                background: viewMode === "disponiveis" ? "#4caf50" : "#81c784",
+                background: viewMode === "available" ? "#4caf50" : "#81c784",
                 fontSize: "14px",
                 padding: "10px 16px"
               }}
             >
-              🏠 Disponíveis
+              🏠 Available
             </button>
             <button
-              onClick={() => setViewMode("todos")}
+              onClick={() => setViewMode("all")}
               style={{
                 ...styles.button,
-                background: viewMode === "todos" ? "#2196f3" : "#64b5f6",
+                background: viewMode === "all" ? "#2196f3" : "#64b5f6",
                 fontSize: "14px",
                 padding: "10px 16px"
               }}
             >
-              📋 Todos
+              📋 All
             </button>
             <button
-              onClick={() => setViewMode("meus")}
+              onClick={() => setViewMode("mine")}
               style={{
                 ...styles.button,
-                background: viewMode === "meus" ? "#ff9800" : "#ffb74d",
+                background: viewMode === "mine" ? "#ff9800" : "#ffb74d",
                 fontSize: "14px",
                 padding: "10px 16px"
               }}
             >
-              ❤️ Meus
+              ❤️ Mine
             </button>
           </div>
         </div>
@@ -1391,10 +1398,10 @@ const AdotarPets = ({ pets, reloadPets }) => {
             onClick={reloadPets}
             style={styles.secondaryButton}
           >
-            🔄 Atualizar Lista
+            🔄 Refresh List
           </button>
           <span style={{ fontSize: '14px', color: '#2e7d32' }}>
-            Mostrando {filteredPets.length} de {pets.length} pets
+            Showing {filteredPets.length} of {pets.length} pets
           </span>
         </div>
 
@@ -1402,29 +1409,29 @@ const AdotarPets = ({ pets, reloadPets }) => {
           <div style={styles.card}>
             <div style={{ textAlign: "center", padding: "40px" }}>
               <span style={{ fontSize: "64px" }}>
-                {viewMode === "disponiveis" ? "🏠" : 
-                 viewMode === "meus" ? "❤️" : "📋"}
+                {viewMode === "available" ? "🏠" : 
+                 viewMode === "mine" ? "❤️" : "📋"}
               </span>
               <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#1a3c1a", margin: "16px 0 8px 0" }}>
-                {pets.length === 0 ? "Nenhum pet cadastrado" : 
-                 viewMode === "disponiveis" ? "Nenhum pet disponível" :
-                 viewMode === "meus" ? "Você não tem pets" : "Nenhum pet encontrado"}
+                {pets.length === 0 ? "No pets registered" : 
+                 viewMode === "available" ? "No available pets" :
+                 viewMode === "mine" ? "You have no pets" : "No pets found"}
               </h2>
               <p style={{ color: "#2e7d32", marginBottom: "20px" }}>
                 {pets.length === 0 
-                  ? "Cadastre o primeiro pet na página 'Criar Pets'!" 
-                  : viewMode === "disponiveis" 
-                    ? "Todos os pets já foram adotados ou têm solicitações."
-                    : viewMode === "meus"
-                      ? "Você ainda não cadastrou nenhum pet."
-                      : "Tente outro modo de visualização."}
+                  ? "Register the first pet on the 'Register Pets' page!" 
+                  : viewMode === "available" 
+                    ? "All pets have been adopted or have pending requests."
+                    : viewMode === "mine"
+                      ? "You haven't registered any pets yet."
+                      : "Try another view mode."}
               </p>
-              {viewMode === "disponiveis" && pets.length > 0 && (
+              {viewMode === "available" && pets.length > 0 && (
                 <button
-                  onClick={() => setViewMode("todos")}
+                  onClick={() => setViewMode("all")}
                   style={styles.button}
                 >
-                  👀 Ver Todos os Pets
+                  👀 View All Pets
                 </button>
               )}
             </div>
@@ -1490,7 +1497,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
                       border: "2px solid #a5d6a7",
                       color: "#7f8c8d"
                     }}>
-                      🐾 Sem imagem
+                      🐾 No image
                     </div>
                   )}
                   
@@ -1503,7 +1510,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
                     margin: "0 0 16px 0",
                     minHeight: "60px"
                   }}>
-                    {pet.metadata.description || "Sem descrição"}
+                    {pet.metadata.description || "No description"}
                   </p>
                   
                   <div style={{ 
@@ -1525,9 +1532,9 @@ const AdotarPets = ({ pets, reloadPets }) => {
                   </div>
 
                   <div style={{ fontSize: "12px", color: "#2e7d32", marginBottom: "16px" }}>
-                    <div>👤 Dono: {shortAddr(pet.owner)}</div>
+                    <div>👤 Owner: {shortAddr(pet.owner)}</div>
                     {hasRequest && (
-                      <div>📨 Solicitado por: {shortAddr(pet.requester)}</div>
+                      <div>📨 Requested by: {shortAddr(pet.requester)}</div>
                     )}
                   </div>
 
@@ -1541,7 +1548,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
                         opacity: (!isConnected || isLoading) ? 0.5 : 1
                       }}
                     >
-                      {isLoading ? "⏳ Solicitando..." : "📮 Solicitar Adoção"}
+                      {isLoading ? "⏳ Requesting..." : "📮 Request Adoption"}
                     </button>
                   ) : isOwnedByUser ? (
                     <div style={{
@@ -1554,7 +1561,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
                       color: "#e65100",
                       fontWeight: "600"
                     }}>
-                      👑 Este é seu pet
+                      👑 This is your pet
                     </div>
                   ) : (
                     <div style={{
@@ -1566,7 +1573,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
                       fontSize: "14px",
                       color: "#616161"
                     }}>
-                      ⏳ Adoção em andamento
+                      ⏳ Adoption in progress
                     </div>
                   )}
                 </div>
@@ -1580,7 +1587,7 @@ const AdotarPets = ({ pets, reloadPets }) => {
 };
 
 // ------------------
-// Página 4 — Solicitações para DOADOR
+// Page 4 — Adoption Requests for DONORS
 // ------------------
 const Solicitacoes = ({ pets, reloadPets }) => {
   const { address, isConnected } = useAccount();
@@ -1590,25 +1597,25 @@ const Solicitacoes = ({ pets, reloadPets }) => {
 
   const aprovarAdocao = async (tokenId) => {
     if (!isConnected) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return;
     }
     
     try {
       setAprovandoId(tokenId);
-      setMessage("🔐 Aprovando - assine na carteira...");
+      setMessage("🔐 Approving - sign in wallet...");
       
       const contract = await getSignerContract(PETS_CONTRACT_ABI, PETS_CONTRACT_ADDRESS);
       const tx = await contract.approveAdoption(tokenId);
       
-      setMessage(`⏳ Tx enviada: ${tx.hash}`);
+      setMessage(`⏳ Tx sent: ${tx.hash}`);
       await tx.wait();
       
-      setMessage("✅ Adoção aprovada!");
+      setMessage("✅ Adoption approved!");
       if (reloadPets) setTimeout(() => reloadPets(), 1500);
     } catch (err) {
-      console.error("Erro approveAdoption:", err);
-      setMessage(`❌ Erro: ${err?.message || String(err)}`);
+      console.error("Error approveAdoption:", err);
+      setMessage(`❌ Error: ${err?.message || String(err)}`);
     } finally {
       setAprovandoId(null);
     }
@@ -1616,31 +1623,31 @@ const Solicitacoes = ({ pets, reloadPets }) => {
 
   const rejeitarAdocao = async (tokenId) => {
     if (!isConnected) {
-      setMessage("❌ Conecte a carteira primeiro");
+      setMessage("❌ Connect wallet first");
       return;
     }
     
     try {
       setRejeitandoId(tokenId);
-      setMessage("🔐 Rejeitando - assine na carteira...");
+      setMessage("🔐 Rejecting - sign in wallet...");
       
       const contract = await getSignerContract(PETS_CONTRACT_ABI, PETS_CONTRACT_ADDRESS);
       const tx = await contract.rejectAdoption(tokenId);
       
-      setMessage(`⏳ Tx enviada: ${tx.hash}`);
+      setMessage(`⏳ Tx sent: ${tx.hash}`);
       await tx.wait();
       
-      setMessage("✅ Solicitação rejeitada!");
+      setMessage("✅ Request rejected!");
       if (reloadPets) setTimeout(() => reloadPets(), 1500);
     } catch (err) {
-      console.error("Erro rejectAdoption:", err);
-      setMessage(`❌ Erro: ${err?.message || String(err)}`);
+      console.error("Error rejectAdoption:", err);
+      setMessage(`❌ Error: ${err?.message || String(err)}`);
     } finally {
       setRejeitandoId(null);
     }
   };
 
-  // Filtrar pets do usuário com solicitações pendentes
+  // Filter user's pets with pending requests
   const petsComSolicitacoes = pets.filter(pet => {
     if (!pet.owner || !address || !pet.requester) return false;
     return pet.owner.toLowerCase() === address.toLowerCase() && pet.requester;
@@ -1660,7 +1667,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
           <span style={{ fontSize: "32px" }}>📋</span>
           <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-            Solicitações de Adoção
+            Adoption Requests
           </h1>
           <span style={{
             background: petsComSolicitacoes.length > 0 ? "#ff9800" : "#4caf50",
@@ -1670,7 +1677,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
             fontSize: "14px",
             fontWeight: "bold"
           }}>
-            {petsComSolicitacoes.length} pendentes
+            {petsComSolicitacoes.length} pending
           </span>
         </div>
 
@@ -1679,10 +1686,10 @@ const Solicitacoes = ({ pets, reloadPets }) => {
             onClick={reloadPets}
             style={styles.secondaryButton}
           >
-            🔄 Atualizar Lista
+            🔄 Refresh List
           </button>
           <span style={{ fontSize: '14px', color: '#2e7d32' }}>
-            Clique para atualizar após aprovar ou rejeitar
+            Click to refresh after approving or rejecting
           </span>
         </div>
 
@@ -1704,11 +1711,11 @@ const Solicitacoes = ({ pets, reloadPets }) => {
             <div style={{ textAlign: "center", padding: "48px" }}>
               <span style={{ fontSize: "64px" }}>✅</span>
               <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#1a3c1a", margin: "16px 0 8px 0" }}>
-                Nenhuma solicitação pendente
+                No pending requests
               </h2>
               <p style={{ color: "#2e7d32" }}>
-                Seus pets ainda não receberam solicitações de adoção.
-                Quando receberem, elas aparecerão aqui.
+                Your pets haven't received any adoption requests yet.
+                When they do, they'll appear here.
               </p>
             </div>
           </div>
@@ -1750,7 +1757,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
                       {pet.metadata.name || `Pet #${pet.id}`}
                     </h3>
                     <p style={{ color: "#2e7d32", margin: "0 0 12px 0" }}>
-                      {pet.metadata.description || "Sem descrição"}
+                      {pet.metadata.description || "No description"}
                     </p>
                     
                     <div style={{
@@ -1761,7 +1768,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
                       marginBottom: "12px"
                     }}>
                       <div style={{ fontWeight: "600", color: "#856404", marginBottom: "4px" }}>
-                        📧 Solicitação de adoção:
+                        📧 Adoption request from:
                       </div>
                       <div style={{
                         fontFamily: "monospace",
@@ -1800,7 +1807,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
                         opacity: (aprovandoId === pet.id || rejeitandoId) ? 0.5 : 1
                       }}
                     >
-                      {aprovandoId === pet.id ? "⏳ Aprovando..." : "✅ Aprovar"}
+                      {aprovandoId === pet.id ? "⏳ Approving..." : "✅ Approve"}
                     </button>
                     
                     <button
@@ -1815,7 +1822,7 @@ const Solicitacoes = ({ pets, reloadPets }) => {
                         opacity: (rejeitandoId === pet.id || aprovandoId) ? 0.5 : 1
                       }}
                     >
-                      {rejeitandoId === pet.id ? "⏳ Rejeitando..." : "❌ Rejeitar"}
+                      {rejeitandoId === pet.id ? "⏳ Rejecting..." : "❌ Reject"}
                     </button>
                     
                     <div style={{ fontSize: "12px", color: "#666", textAlign: "center" }}>
@@ -1833,21 +1840,16 @@ const Solicitacoes = ({ pets, reloadPets }) => {
 };
 
 // ------------------
-// Página 5 — Minhas Adoções
+// Page 5 — My Adoptions
 // ------------------
 const MinhasAdocoes = ({ pets }) => {
   const { address } = useAccount();
   
-  // Filtrar pets adotados pelo usuário
+  // Filter pets adopted by user
   const meusPets = pets.filter(pet => 
     pet.owner && address && 
     pet.owner.toLowerCase() === address.toLowerCase()
   );
-
-  const shortAddr = (addr = "") => {
-    if (!addr) return "";
-    return `${addr.substring(0,6)}...${addr.substring(addr.length - 4)}`;
-  };
 
   return (
     <div style={styles.container}>
@@ -1858,7 +1860,7 @@ const MinhasAdocoes = ({ pets }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
           <span style={{ fontSize: "32px" }}>🐕</span>
           <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1a3c1a", margin: 0 }}>
-            Meus Pets Adotados
+            My Adopted Pets
           </h1>
           <span style={{
             background: "#4caf50",
@@ -1877,10 +1879,10 @@ const MinhasAdocoes = ({ pets }) => {
             <div style={{ textAlign: "center", padding: "48px" }}>
               <span style={{ fontSize: "64px" }}>🐈</span>
               <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "#1a3c1a", margin: "16px 0 8px 0" }}>
-                Nenhum pet adotado
+                No adopted pets yet
               </h2>
               <p style={{ color: "#2e7d32" }}>
-                Você ainda não adotou nenhum pet. Visite a página de adoção para encontrar seu novo amigo!
+                You haven't adopted any pets yet. Visit the adoption page to find your new friend!
               </p>
             </div>
           </div>
@@ -1914,7 +1916,7 @@ const MinhasAdocoes = ({ pets }) => {
                     border: "2px solid #a5d6a7",
                     color: "#7f8c8d"
                   }}>
-                    🐾 Sem imagem
+                    🐾 No image
                   </div>
                 )}
                 
@@ -1943,7 +1945,7 @@ const MinhasAdocoes = ({ pets }) => {
                   borderRadius: "8px",
                   border: "1px solid #a5d6a7"
                 }}>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#1a3c1a" }}>ID do Pet:</div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#1a3c1a" }}>Pet ID:</div>
                   <div style={{ fontFamily: "monospace", fontSize: "14px" }}>#{pet.id}</div>
                 </div>
               </div>
@@ -1956,7 +1958,7 @@ const MinhasAdocoes = ({ pets }) => {
 };
 
 // ------------------
-// Componente Principal (FINAL)
+// Main Component
 // ------------------
 function PatasConfiaDApp() {
   const [currentPage, setCurrentPage] = useState("registro");
@@ -1993,7 +1995,7 @@ function PatasConfiaDApp() {
         fontWeight: "bold",
         color: "#2e7d32"
       }}>
-        <span>🐾 Total de Pets: {pets.length}</span>
+        <span>🐾 Total Pets: {pets.length}</span>
 
         <button 
           onClick={reloadPets}
@@ -2004,7 +2006,7 @@ function PatasConfiaDApp() {
             padding: "6px 12px"
           }}
         >
-          🔄 Atualizar
+          🔄 Refresh
         </button>
       </div>
 
@@ -2018,7 +2020,7 @@ function PatasConfiaDApp() {
           maxWidth: "600px"
         }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔄</div>
-          <div>Carregando pets...</div>
+          <div>Loading pets...</div>
         </div>
       )}
 
