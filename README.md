@@ -1,168 +1,73 @@
-# Donation Tracking and DAO Governance for Animal Protection
+# Donation Tracking & DAO Governance
 
-A prototype **Web3 DApp** focused on improving **transparency and trust in donations** for animal protection organizations.
-
----
-
-## Overview
-
-This project demonstrates how blockchain technology can be used to:
-
-* Track donations transparently
-* Increase trust between donors and organizations
-* Enable community participation through a **DAO governance concept**
-
-> This is a **prototype**, not a production-ready DAO.
+A Web3 DApp prototype focused on eradicating distrust in donations for animal protection through radical transparency and decentralized governance on the Ethereum Sepolia network.
 
 ---
 
-## Key Idea
+## Project Overview
+This project demonstrates how blockchain technology solves the "trust gap" in the non-profit sector by providing:
 
-the platform focuses on:
+* **Immutable Tracking:** Every cent donated is recorded on-chain.
+* **Active Governance:** Donors become DAO members, deciding the destination of funds.
+* **Global Impact:** Removal of banking barriers for international donations.
 
-* Tracking donation flows on-chain
-* Using wallets as user identity
-* Simulating DAO governance 
-
----
-
-#  Tools, Technologies and SDKs Used
-
-### **Frontend**
-
-* React 19
-* Vite
-* Semantic UI React
-* @tanstack/react-query
-* wagmi
-* viem
-* ethers.js
+> **Technical Note:** This is a prototype, not a production-ready DAO.
 
 ---
 
-### **Web3 Backend**
+## Problem vs. Solution 
 
-* Solidity
-* OpenZeppelin ERC721
-* Hardhat (if used)
+### The Critical Scenario
+* **Trust Crisis:** According to the FEBRACA (Brazilian Federation of the Animal Cause) report, the lack of transparency in financial reporting is the main reason preventing larger or recurring donations.
+* **Mass Abandonment:** Brazil has approximately 30 million abandoned animals, with shelters operating at 135% capacity.
+* **Explosion of Abuse:** CNJ (National Council of Justice of Brazil) data shows a 1,400% increase in judicial processes for animal cruelty over the last 4 years.
+* **Financial Dependency:** 62% of NGOs survive solely on individual donations but lack the tools to prove exactly where the money was spent.
 
----
-
-### **Storage**
-
-* Pinata for storing:
-
-  * images (from the original project structure)
-  * metadata JSON (tokenURI)
+### The Solution
+* **Eliminating Distrust:** By replacing PDF reports with Blockchain records, donors don't need to "believe" the NGO; they can verify balances and expenses directly on the block explorer (Etherscan).
+* **Universal Participation:** Anyone in the world can donate and participate in governance without bank intermediaries or international remittance fees.
+* **Strategic Stakeholders:** This model meets the transparency requirements of global giants like WWF (World Wide Fund for Nature), Ampara Animal, and ESG (Environmental, Social, and Governance) investors.
 
 ---
 
-### **Project Dependencies**
+## Global Impact & DAO Governance
+The core differentiator of the project is turning the donor into a governance member:
 
-# **How to Run the Project**
-
-```txt
-dependencies:
-@tanstack/react-query 5.90.11
-@uidotdev/usehooks 2.4.1
-ethers 5.8.0
-react 19.2.0
-react-dom 19.2.0
-semantic-ui-css 2.5.0
-semantic-ui-react 2.1.5
-viem 1.21.1
-wagmi 1.4.12
-
-devDependencies:
-@eslint/js 9.39.1
-@types/react 19.2.7
-@types/react-dom 19.2.3
-@vitejs/plugin-react 5.1.1
-eslint 9.39.1
-eslint-plugin-react-hooks 7.0.1
-eslint-plugin-react-refresh 0.4.24
-globals 16.5.0
-vite 7.2.4
-```
+* **Total Transparency:** The donation flow is visible to the entire world, eliminating doubts about the final destination of the capital.
+* **Cryptographic Voting:** Decisions on which animals receive emergency surgeries or shelter renovations can be voted on by platform token holders.
+* **Scalability:** A model that can be replicated by any animal NGO on the planet to attract international resources with automatic auditing.
 
 ---
 
-# **Pinata Configuration (Required)**
+## Technologies Used
+* **Frontend:** React 19, Vite, Semantic UI React, wagmi, viem, ethers.js.
+* **Web3 Backend:** Solidity, OpenZeppelin ERC721.
+* **Network:** Ethereum Sepolia Testnet.
+* **Storage:** Pinata (IPFS) for metadata and images.
 
+---
+
+## Setup and Execution
+
+### 1. Smart Contracts (Remix IDE)
+1.  In MetaMask, select the **Sepolia** network.
+2.  In Remix, set the environment to **Injected Provider (MetaMask)**.
+3.  Deploy in order:
+    * **First:** `PatasConfiaUsers.sol`
+    * **Second:** `PatasConfia.sol` (passing the first contract's address into the constructor).
+
+### 2. Frontend Configuration
 Create a `.env` file inside the `frontend/` folder:
+```env
+VITE_PINATA_JWT=your_pinata_jwt_token
+In the file frontend/src/config.js, update with the Sepolia addresses:
 
-```
-VITE_PINATA_JWT=<your_pinata_jwt_key>
-```
-
-This key is used to upload data and generate the tokenURI.
-
----
-
-## **1. Deploy Smart Contracts on the CESS Network**
-
-Before running the frontend, you must deploy the smart contracts.
-
-### Steps:
-
-1. Open Remix IDE
-2. Go to **Deploy & Run Transactions**
-3. In *Environment*, select:
-   **Injected Provider (MetaMask)**
-4. In MetaMask, select the **CESS network**
-5. Deploy the contracts:
-
-   * `PatasConfiaUsers.sol`
-   * `PatasConfia.sol` (using the address of the previous contract)
-
-After deployment, copy the contract addresses.
-
----
-
-## **2. Update Contract Addresses in the Frontend**
-
-In the file:
-
-```
-frontend/src/config.js
-```
-
-Replace with:
-
-```
-export const USERS_CONTRACT_ADDRESS = "<PatasConfiaUsers_address>";
-export const PETS_CONTRACT_ADDRESS = "<PatasConfia_address>";
-```
-
-Without this step, the frontend will not connect to the contracts.
-
----
-
-## **3. Run the Project**
-
-### Navigate to the project folder:
-
-```bash
-cd patasconfia
+JavaScript
+export const USERS_CONTRACT_ADDRESS = "0x...";
+export const PETS_CONTRACT_ADDRESS = "0x...";
+3. Running Locally
+Bash
 cd frontend
-```
-
-### Install dependencies:
-
-```bash
 pnpm install
-```
-
-### Start the development server:
-
-```bash
 pnpm dev
-```
-
-The application will be available at:
-
-```
-http://localhost:5173
-```
-
-
+The app will be available at http://localhost:5173.
